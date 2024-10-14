@@ -71,3 +71,59 @@ Initiate and complete the backup process:
 After the backup is complete, stop the backup:
 - SELECT * FROM pg_stop_backup(false, true);
 
+# Restore Process
+If you need to restore the database from WAL logs, follow these steps:
+Set the Restore Command
+In the PostgreSQL configuration file (postgresql.conf), specify the restore command:
+- restore_command = 'cp /mnt/server/archivedir/%f %p'
+Touch Recovery Signal File
+Create a recovery.signal file to indicate PostgreSQL should recover:
+- sudo touch /var/lib/postgresql/14/main/recovery.signal
+This tells PostgreSQL to enter recovery mode and apply archived WAL files.
+
+# Standby Server Configuration
+To configure a standby server for replication, follow these steps:
+Prepare the Standby Server
+Ensure that PostgreSQL is installed and that the data directory on the standby server is correctly set up:
+- sudo chown -R postgres:postgres /var/lib/postgresql/14/main
+- sudo chmod -R 700 /var/lib/postgresql/14/main
+### Start PostgreSQL on Standby
+Start the PostgreSQL service in standby mode with immediate recovery:
+- sudo -u postgres /usr/lib/postgresql/14/bin/pg_ctl -D /var/lib/postgresql/14/main -l /var/log/postgresql/postgresql-14-main.log start -m immediate
+
+### Stop PostgreSQL
+You can stop PostgreSQL on the standby server when needed:
+- sudo -u postgres /usr/lib/postgresql/14/bin/pg_ctl -D /var/lib/postgresql/14/main -l /var/log/postgresql/postgresql-14-main.log stop
+
+### Start and Stop PostgreSQL Service
+Starting PostgreSQL
+To start PostgreSQL on the primary or standby server:
+- sudo -u postgres /usr/lib/postgresql/14/bin/pg_ctl -D /var/lib/postgresql/14/main start
+
+### Stopping PostgreSQL
+To stop PostgreSQL:
+- sudo -u postgres /usr/lib/postgresql/14/bin/pg_ctl -D /var/lib/postgresql/14/main stop
+
+### Restarting PostgreSQL
+To restart PostgreSQL:
+- sudo systemctl restart postgresql
+
+# User and Role Creation
+For PostgreSQL access, create the necessary roles and set a superuser password if not already done:
+Log in to PostgreSQL:
+- sudo -u postgres psql
+
+### Create a superuser role:
+- CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'root';
+Alternatively, you can log in directly:
+- psql -U root -d postgres
+
+  
+### Key Concepts Covered:
+- **WAL Archiving**: Enables continuous archiving of transaction logs for recovery and replication.
+- **Base Backup**: A full backup using `pg_basebackup`.
+- **Restore Process**: Defines how to restore using archived WAL logs.
+- **Standby Server**: Configuration for a replication server in standby mode.
+- **Permissions and Security**: Ensures proper ownership and permissions for directories and files.
+
+This README covers the main steps to configure and manage PostgreSQL backup and replication with WAL. Feel free to adjust the commands and paths based on your specific environment.
